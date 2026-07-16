@@ -38,10 +38,6 @@ const rooms: Record<string, Set<string>> = {};
 io.on("connection", (socket) => {
   console.log("User Connected:", socket.id);
 
-  // =========================================================
-  // 🔥 JOIN DOCUMENT
-  // =========================================================
-
   socket.on("join-doc", async (docId: string) => {
     try {
       // 🔥 Leave old rooms
@@ -64,17 +60,14 @@ io.on("connection", (socket) => {
         }
       }
 
-      // 🔥 Join new room
       socket.join(docId);
 
-      // 🔥 Init room
       if (!rooms[docId]) {
         rooms[docId] = new Set();
       }
 
       rooms[docId].add(socket.id);
 
-      // 🔥 Fetch document from DB
       const document =
         await prisma.document.findUnique({
           where: {
@@ -82,7 +75,6 @@ io.on("connection", (socket) => {
           },
         });
 
-      // ❌ Document not found
       if (!document) {
         socket.emit(
           "error",
@@ -92,13 +84,11 @@ io.on("connection", (socket) => {
         return;
       }
 
-      // ✅ FIXED INIT PAYLOAD
       socket.emit("init", {
         title: document.title,
         content: document.content,
       });
 
-      // 🔥 Broadcast active users
       io.to(docId).emit(
         "users",
         Array.from(rooms[docId])
@@ -114,10 +104,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  // =========================================================
-  // 🔥 REALTIME DOCUMENT UPDATE
-  // =========================================================
-
   socket.on(
     "update-doc",
     ({
@@ -128,17 +114,12 @@ io.on("connection", (socket) => {
       content: string;
     }) => {
 
-      // ✅ FIXED
       socket.to(docId).emit(
         "receive-update",
         content
       );
     }
   );
-
-  // =========================================================
-  // 🔥 SAVE DOCUMENT
-  // =========================================================
 
   socket.on(
     "save-doc",
@@ -180,10 +161,6 @@ io.on("connection", (socket) => {
     }
   );
 
-  // =========================================================
-  // 🔥 UPDATE TITLE
-  // =========================================================
-
   socket.on(
     "update-title",
     async ({
@@ -218,10 +195,6 @@ io.on("connection", (socket) => {
     }
   );
 
-  // =========================================================
-  // 🔥 CURSOR MOVE
-  // =========================================================
-
   socket.on(
     "cursor-move",
     ({
@@ -248,10 +221,6 @@ io.on("connection", (socket) => {
       );
     }
   );
-
-  // =========================================================
-  // 🔥 DISCONNECT
-  // =========================================================
 
   socket.on("disconnect", () => {
     console.log(
